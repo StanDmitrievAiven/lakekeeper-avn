@@ -1,4 +1,9 @@
-# Stage 1: Use the specified Lakekeeper image from your docker-compose
+# Stage 1: Use a shell-enabled image to prepare files with correct permissions
+FROM alpine:latest AS file-preparer
+COPY entrypoint.sh /tmp/entrypoint.sh
+RUN chmod +x /tmp/entrypoint.sh
+
+# Stage 2: Use the specified Lakekeeper image from your docker-compose
 # Define an ARG to make the image source configurable if needed
 ARG LAKEKEEPER_IMAGE=quay.io/lakekeeper/catalog:latest-main
 FROM ${LAKEKEEPER_IMAGE} AS lakekeeper-app
@@ -7,9 +12,8 @@ FROM ${LAKEKEEPER_IMAGE} AS lakekeeper-app
 ENV LAKEKEEPER__PG_ENCRYPTION_KEY="This-is-NOT-Secure!"
 ENV LAKEKEEPER__AUTHZ_BACKEND="allowall"
 
-# Copy the entrypoint script into the container
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Copy the entrypoint script from the preparer stage (already has executable permissions)
+COPY --from=file-preparer /tmp/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the entrypoint script to run migration and then the server
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
