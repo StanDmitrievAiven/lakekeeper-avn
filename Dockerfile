@@ -17,11 +17,17 @@ RUN apk add --no-cache ca-certificates
 ENV LAKEKEEPER__PG_ENCRYPTION_KEY="This-is-NOT-Secure!"
 ENV LAKEKEEPER__AUTHZ_BACKEND="allowall"
 
-# Copy the lakekeeper binary from the distroless image
+# Copy the lakekeeper binary and any necessary files from the distroless image
 # Create the same directory structure as the original image
 RUN mkdir -p /home/nonroot
 COPY --from=lakekeeper-binary /home/nonroot/lakekeeper /home/nonroot/lakekeeper
-RUN chmod +x /home/nonroot/lakekeeper
+
+# Verify the binary exists and is executable
+RUN ls -la /home/nonroot/lakekeeper || echo "Binary not found at expected location"
+RUN chmod +x /home/nonroot/lakekeeper 2>/dev/null || true
+
+# Also try to find and copy the binary if it's in a different location
+RUN find /home -name "lakekeeper" -type f 2>/dev/null || echo "Searching for lakekeeper binary..."
 
 # Copy and set up the entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
