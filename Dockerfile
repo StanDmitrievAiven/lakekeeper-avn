@@ -1,11 +1,13 @@
+# Define an ARG to make the image source configurable if needed
+# Must be declared before any FROM that uses it
+ARG LAKEKEEPER_IMAGE=quay.io/lakekeeper/catalog:latest-main
+
 # Stage 1: Use a shell-enabled image to prepare files with correct permissions
 FROM alpine:latest AS file-preparer
 COPY entrypoint.sh /tmp/entrypoint.sh
 RUN chmod +x /tmp/entrypoint.sh
 
 # Stage 2: Use the specified Lakekeeper image from your docker-compose
-# Define an ARG to make the image source configurable if needed
-ARG LAKEKEEPER_IMAGE=quay.io/lakekeeper/catalog:latest-main
 FROM ${LAKEKEEPER_IMAGE} AS lakekeeper-app
 
 # Set the base environment variables
